@@ -1,0 +1,13 @@
+Flask
+Flask-WTF
+Flask-Limiter
+Flask-Cors
+Flask-SocketIO
+spotipy
+python-dotenv
+tenacity
+mutagen
+aiohttp
+gunicorn
+gevent
+pycryptodome

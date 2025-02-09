@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="Song downloader - Download MP3">
+    <meta property="og:description" content="Download your favorite songs in MP3 format from link or song-name. Fast and easy-to-use song downloader.">
+    <meta property="og:image" content="{{ url_for('static', filename='image.jpeg') }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://spotifydownloader-killua.onrender.com">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <title>Song Downloader</title>
+    <style>
+      body {
+        background-color: #1DB954;
+        color: #fff;
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      nav {
+        width: 100%;
+        background-color: #191414;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        position: absolute;
+        top: 0;
+        z-index: 1;
+        box-sizing: border-box;
+      }
+
+      .nav-logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .nav-links a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 1rem;
+      }
+
+      .github-icon {
+        width: 30px;
+        height: 30px;
+        background: url("https://spotifydownloader-killua.onrender.com/static/GitHub.svg") no-repeat center;
+        background-color: #191414;
+        background-size: contain;
+      }
+
+      section {
+        width: 100%;
+        padding: 20px 10%;
+        text-align: justify;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        box-sizing: border-box;
+        background-color: #121212;
+      }
+
+      section h1 {
+        font-size: 50px;
+        color: #1DB954;
+        margin-bottom: 15px;
+      }
+
+      section p {
+        line-height: 25px;
+      }
+
+      section a {
+        font-size: 17px;
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      section h2 {
+        color: #1DB954;
+      }
+
+      section ul li {
+        margin: 10px 0;
+      }
+
+      section li b {
+        color: #1DB954;
+      }
+
+      .parent-list {
+        list-style-type: none;
+        padding-left: 0px;
+        width: 100%;
+      }
+
+      section:nth-of-type(1) {
+        background: linear-gradient(135deg, rgb(0, 51, 153), rgba(0, 0, 0, 0.58), rgb(0, 0, 0)), url("https://kayamusic.netlify.app/assets/css/Images/bg.png") no-repeat center center/cover;
+      }
+
+      section:nth-of-type(2) p, .parent-list {
+        max-width: 800px;
+      }
+
+      footer {
+        background-color: black;
+        color: #fff;
+        text-align: center;
+        width: 100%;
+        position: relative;
+        bottom: 0;
+        box-sizing: border-box;
+        padding: 0 40px;
+      }
+
+      #content {
+        max-width: 600px;
+        width: 100%;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #downloadForm {
+        width: 100%;
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #formText {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 40px;
+        font-size: 20px;
+      }
+
+      #urlInput {
+        width: 100%;
+        padding: 15px;
+        box-sizing: border-box;
+        margin: 15px 0;
+        border-radius: 50px;
+        border: none;
+      }
+
+      #downloadButton {
+        background-color: #1DB954;
+        color: #fff;
+        padding: 12px 20px;
+        border: none;
+        cursor: pointer;
+        border-radius: 50px;
+        font-size: 15px;
+        text-align: center;
+      }
+
+      #progressBar {
+        display: none;
+        align-items: center;
+        position: absolute;
+        bottom: -60px;
+        background-color: #000;
+        height: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        width: 100%;
+        justify-content: center;
+      }
+
+      #progressContainer {
+        display: flex;
+        height: 100%;
+        width: 99%;
+        flex-direction: row;
+        align-items: center;
+      }
+
+      #progress {
+        height: 80%;
+        background-color: #1DB954;
+        border-radius: 8px;
+        transition: width 0.3s ease-in-out;
+        width: 0%;
+      }
+
+      #progressText {
+        margin-left: 10px;
+        display: none;
+        width: 100%;
+        position: absolute;
+        bottom: -30px;
+      }
+
+      @media (max-width: 600px) {
+        nav {
+          flex-direction: row;
+          align-items: center;
+          text-align: center;
+          padding: 10px;
+        }
+
+        .nav-logo {
+          font-size: 1rem;
+        }
+
+        .nav-links {
+          flex-direction: row;
+          gap: 10px;
+        }
+
+        .nav-links a {
+          font-size: 0.9rem;
+        }
+
+        section h1 {
+          font-size: 35px;
+        }
+
+        #formText {
+          font-size: 17px;
+        }
+
+        .parent-list ul {
+          padding-left: 15px;
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-logo">Song Downloader</div>
+      <div class="nav-links">
+        <a href="#">Spotify Playlist</a>
+        <a href="#">YouTube Converter</a>
+        <a href="https://github.com/killuazoldyckreal/Spotify-Downloader" target="_blank" style="display: flex; align-items: center; gap: 5px;">Project <div class="github-icon"></div>
+        </a>
+      </div>
+    </nav>
+    <section>
+      <div id="content">
+        <h1>Song Downloader</h1>
+        <form id="downloadForm">
+          <div id="formText">
+            <span>Paste Spotify URL or Type Song Name:</span>
+          </div>
+          <input type="text" placeholder="E.g https://open.spotify.com/track/7rxjNVqyjTW7igBlVJD1aw" id="urlInput" name="urlInput">
+          <input type="submit" id="downloadButton" value="Download">
+        </form>
+        <div id="progressBar">
+          <div id="progressContainer">
+            <div id="progress"></div>
+          </div>
+        </div>
+        <div id="progressText">0%</div>
+      </div>
+    </section>
+    <section>
+      <h1>About</h1>
+      <p>Song Downloader is an advanced online tool designed to simplify the process of downloading songs in MP3 format. Whether you're looking to download a track from Spotify, YouTube, or another source, this platform allows you to do so effortlessly. Our website ensures fast, high-quality downloads with a user-friendly interface.</p>
+      <p>Unlike many other services, Song Downloader does not require users to create an account, making it quick and hassle-free. Simply paste the URL of your desired track or enter the song name in the search field, and within seconds, you’ll have access to your favorite music in MP3 format.</p>
+      <p>Our tool is particularly useful for users who want to listen to their favorite songs offline without the need for a premium subscription. Whether you're traveling, working out, or just enjoying music at home, Song Downloader provides an easy way to keep your favorite tracks accessible anytime.</p>
+    </section>
+    <section>
+      <h1>How It Works</h1>
+      <a>Follow these easy steps to download your favorite songs in MP3 format:</a>
+      <ul class="parent-list">
+        <li>
+          <b>Step 1: Enter Song URL or Song Name</b>
+          <ul>
+            <li>If you already have a Spotify or YouTube song link, simply copy and paste it into the input field on our website.</li>
+            <li>If you don’t have a direct link, you can type the song name in the search bar, and our system will fetch the best match for you.</li>
+          </ul>
+        </li>
+        <li>
+          <b>Step 2: Click the Download Button</b>
+          <ul>
+            <li>After entering the song link or name, click on the "Download" button to begin the process.</li>
+            <li>Our system will automatically analyze the provided URL or search query and retrieve the best available MP3 version.</li>
+          </ul>
+        </li>
+        <li>
+          <b>Step 3: Processing the Request</b>
+          <ul>
+            <li>The tool will fetch the song from the respective platform, convert it into high-quality MP3, and generate a download link.</li>
+            <li>This process usually takes a few seconds, depending on the song length and server load.</li>
+          </ul>
+        </li>
+        <li>
+          <b>Step 4: Save the downloaded MP3 File</b>
+          <ul>
+            <li>Once the file is ready it will be available for instant download without any additional steps.</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+    <section>
+      <h1>Features</h1>
+      <a>Song Downloader is designed to provide a seamless and efficient music downloading experience.</a>
+      <ul class="parent-list">
+        <li style="margin-bottom:20px;">
+          <b>Multi-Platform Support:</b>
+          <ul>
+            <li style="margin-top:5px;margin-bottom:20px;">Our tool supports downloading songs from various platforms, including Spotify and YouTube, ensuring a broad selection of music.</li>
+          </ul>
+        </li>
+        <li style="margin-bottom:20px;">
+          <b>High-Quality MP3 Downloads:</b>
+          <ul>
+            <li style="margin-top:5px;margin-bottom:20px;">We prioritize audio quality by providing high-bitrate MP3 files, ensuring the best listening experience.</li>
+          </ul>
+        </li>
+        <li style="margin-bottom:20px;">
+          <b>Completely Free to Use:</b>
+          <ul>
+            <li style="margin-top:5px;margin-bottom:20px;">Enjoy unlimited music downloads without any hidden charges or subscription fees.</li>
+          </ul>
+        </li>
+        <li style="margin-bottom:20px;">
+          <b>User-Friendly Interface:</b>
+          <ul>
+            <li style="margin-top:5px;margin-bottom:20px;">The website is designed with simplicity in mind, ensuring that even non-tech-savvy users can navigate and download songs easily.</li>
+          </ul>
+        </li>
+        <li style="margin-bottom:20px;">
+          <b>Custom Search Functionality:</b>
+          <ul>
+            <li style="margin-top:5px;margin-bottom:20px;">If you don’t have a direct link, you can simply enter the song name, and our system will fetch the best match for you.</li>
+          </ul>
+        </li>
+        <li style="margin-bottom:20px;">
+          <b>No Ads or Pop-Ups:</b>
+          <ul>
+            <li style="margin-top:5px;margin-bottom:20px;">We aim to provide a clean, distraction-free experience by minimizing intrusive ads and pop-ups.</li>
+          </ul>
+        </li>
+        <li style="margin-bottom:20px;">
+          <b>Secure & Private:</b>
+          <ul>
+            <li style="margin-top:5px;margin-bottom:20px;">We prioritize user privacy by ensuring that no personal data is collected or stored.</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+    <footer>
+      <p style="font-size: 12px;">This website is not affiliated with or endorsed by Spotify AB. Our use of the name "Spotify" is for context, not claiming any ownership. It remains the property of the copyright holder. spotifydownloader-killua.com doesn't host any copyrighted material. We utilize third party services to accomplish our goals.</p>
+      <p>© 2025 Song Downloader | Made by killuazoldyckreal</p>
+    </footer>
+    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+      var socket = io.connect('https://spotifydownloader-killua.onrender.com', {
+        transports: ["websocket"],
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 5000,
+        pingInterval: 25000,
+        pingTimeout: 60000
+      });
+      let isDownloading = false;
+      let abortController;
+      let audioChunks = [];
+      let zip = new JSZip();
+      let tracks = {};
+
+      function hideProgress() {
+        setTimeout(function() {
+          document.getElementById("progressBar").style.display = "none";
+          document.getElementById("progressText").style.display = "none";
+          document.getElementById("progress").style.width = "0%";
+          document.getElementById("progressText").innerHTML = "0%";
+          document.getElementById("urlInput").value = "";
+          document.getElementById("downloadButton").value = "Download";
+          isDownloading = false;
+          audioChunks = [];
+          zip = new JSZip();
+          tracks = {};
+        }, 3000);
+      }
+
+      function displayMessage(htmlelement, message, timeout) {
+        setTimeout(function() {
+          htmlelement.innerHTML = message;
+        }, timeout);
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById("downloadForm").addEventListener("submit", function(event) {
+          event.preventDefault();
+          if (!isDownloading) {
+            isDownloading = true;
+            audioChunks = [];
+            abortController = new AbortController();
+          } else {
+            hideProgress();
+            abortController.abort();
+            return;
+          }
+          var urlInputValue = document.getElementById("urlInput").value;
+          var progressBardiv = document.getElementById("progressBar");
+          var progressBar = document.getElementById("progress");
+          var progressText = document.getElementById("progressText");
+          const spotifyUrl = urlInputValue.trim();
+          const trackMatch = spotifyUrl.match(/\/track\/(\w+)/);
+          const playlistMatch = spotifyUrl.match(/\/playlist\/(\w+)/);
+          if (spotifyUrl.length < 1) {
+            hideProgress();
+            alert('Invalid Input');
+            return;
+          }
+          document.getElementById("downloadButton").value = "Cancel download";
+          progressText.style.display = "block";
+          socket.off('playlist_audio_chunk');
+          socket.off('playlist_audio_complete');
+          socket.off('playlist_download_complete');
+          socket.off('audio_chunk');
+          socket.off('audio_complete');
+          socket.off('error');
+          if (playlistMatch) {
+            const playlistId = playlistMatch[1];
+            displayMessage(progressText, "Fetching playlist...", 1000);
+            socket.emit('request_playlist', {
+              'playlist_id': playlistId
+            });
+            tracks = {};
+            socket.on('playlist_audio_chunk', (data) => {
+              if (!tracks[data.track_name]) {
+                tracks[data.track_name] = [];
+              }
+              let chunk = new Uint8Array(data.data);
+              tracks[data.track_name].push(chunk);
+              progressBardiv.style.display = "flex";
+              progressBar.style.width = `${data.progress_percentage}%`;
+              progressText.innerText = `Downloading: ${data.track_name} (${data.progress_percentage}%)`;
+            });
+            socket.on('playlist_audio_complete', (data) => {
+              const track_name = data.filename;
+              let trackBlob = new Blob(tracks[track_name], {
+                type: 'audio/mpeg'
+              });
+              zip.file(track_name, trackBlob);
+            });
+            socket.on('playlist_download_complete', () => {
+              progressText.innerText = 'Playlist downloaded! Converting to .zip file...';
+              zip.generateAsync({
+                type: 'blob'
+              }).then((content) => {
+                let a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = 'Spotify_Playlist.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                hideProgress();
+              });
+            });
+          } else {
+            if (trackMatch) {
+              const trackId = trackMatch[1];
+              socket.emit('request_audio', {
+                'track_id': trackId
+              });
+            } else {
+              socket.emit('request_audio', {
+                'track_name': spotifyUrl
+              });
+            }
+            socket.on('audio_chunk', (data) => {
+              progressBardiv.style.display = "flex";
+              let chunk = new Uint8Array(data.data);
+              audioChunks.push(chunk);
+              progressBar.style.width = `${data.progress_percentage}%`;
+              progressText.innerText = `${data.progress_percentage}%`;
+            });
+            socket.on('audio_complete', (data) => {
+              progressBar.style.width = '100%';
+              progressText.innerText = '100%';
+              let blob = new Blob(audioChunks, {
+                type: "audio/mpeg"
+              });
+              let downloadUrl = URL.createObjectURL(blob);
+              let a = document.createElement("a");
+              a.href = downloadUrl;
+              a.download = data.filename;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              hideProgress();
+            });
+          }
+          socket.on('error', (errorData) => {
+            hideProgress();
+            alert('Error: ' + errorData.error);
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
