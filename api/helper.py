@@ -215,7 +215,7 @@ async def fetch_playlist(playlistid):
                         for track in tracks:
                             track_info = {}
                             track_info['id'] = track['id']
-                            track_info['name'] = track['name']
+                            track_info['name'] = track['title']
                             track_info['album'] = {}
                             track_info['album']['name'] = track["album"]
                             track_info['album']['release_date'] = track['releaseDate']
