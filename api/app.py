@@ -37,14 +37,14 @@ client_id = os.getenv('CLIENT_ID')
 client_secret = os.getenv('CLIENT_SECRET')
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
 
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(1))
 def fetch_spotify_track(track_id=None, track_name=None):
     if track_id:
         return sp.track(track_id)
     else:
         return sp.search(q=track_name, type='track', limit=1)['tracks']['items'][0]
         
-@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(3))
+@retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(1))
 def fetch_spotify_playlist(playlist_id):
     return sp.playlist_tracks(playlist_id)['items']
 
