@@ -196,7 +196,7 @@ async def download_audio(url):
 async def fetch_playlist(playlistid):
     playlist_url = f"https://open.spotify.com/playlist/{playlistid}"
     body = {
-        "data": get_token(tid),
+        "data": get_token(playlist_url),
         "offset": "",
         "type": "playlist"
     }
