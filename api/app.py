@@ -13,7 +13,7 @@ import logging
 import sys
 from tenacity import retry, wait_exponential, stop_after_attempt
 from flask_socketio import SocketIO, emit
-from helper import get_mp3, add_mdata, CustomCacheHandler
+from helper import get_mp3, add_mdata, CustomCacheHandler, fetch_playlist
 from datetime import timedelta
 
 logging.basicConfig(
@@ -105,7 +105,10 @@ def handle_playlist_stream(data):
         return
     
     try:
-        tracks = fetch_spotify_playlist(playlist_id)
+        try:
+            tracks = fetch_spotify_playlist(playlist_id)
+        except:
+            tracks = fetch_playlist(playlist_id)
         
         for track in tracks:
             track_info = track['track']
@@ -120,7 +123,10 @@ def handle_playlist_stream(data):
             release_date = track_info['album']['release_date']
             artists = [artist['name'] for artist in track_info['artists']]
             album_artists = [artist['name'] for artist in track_info['album']['artists']]
-            genres = sp.artist(track_info['artists'][0]['id'])['genres']
+            if track_info['artists'][0]['id']!="":
+                genres = sp.artist(track_info['artists'][0]['id'])['genres']
+            else:
+                genres = ""
             cover_art_url = track_info['album']['images'][0]['url']
             
             mdata = { 
