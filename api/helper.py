@@ -228,7 +228,7 @@ async def fetch_playlist(playlistid):
                                 artist_info['name'] = artist
                                 track_info['artists'].append(artist_info)
                                 track_info['album']['artists'].append(artist_info)
-                            track_info['album']['images'] = [track["cover"]]
+                            track_info['album']['images'] = [{"url": track["cover"]}]
                             track_dict = { 'track': track_info }
                             neat_tracks.append(track_dict)
                         return neat_tracks
