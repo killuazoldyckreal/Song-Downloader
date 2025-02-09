@@ -108,7 +108,7 @@ def handle_playlist_stream(data):
         try:
             tracks = fetch_spotify_playlist(playlist_id)
         except:
-            tracks = fetch_playlist(playlist_id)
+            tracks = asyncio.run(fetch_playlist(playlist_id))
         
         for track in tracks:
             track_info = track['track']
