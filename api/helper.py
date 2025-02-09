@@ -193,6 +193,49 @@ async def download_audio(url):
                 return await response.read()
     return None
 
+async def fetch_playlist(playlistid):
+    playlist_url = f"https://open.spotify.com/playlist/{playlistid}"
+    body = {
+        "data": get_token(tid),
+        "offset": "",
+        "type": "playlist"
+    }
+    headers = json.loads(api2_headers)
+    url = api2_url.replace("download", "data")
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=body) as response:
+            if response.status == 200:
+                try:
+                    data = await response.json()
+                    statusCode = data.get("statusCode", None)
+                    if statusCode and statusCode==200:
+                        tracks = data["trackList"]
+                        neat_tracks = []
+                        for track in tracks:
+                            track_info = {}
+                            track_info['id'] = track['id']
+                            track_info['name'] = track['name']
+                            track_info['album'] = {}
+                            track_info['album']['name'] = track["album"]
+                            track_info['album']['release_date'] = track['releaseDate']
+                            track_info['artists'] = []
+                            track_info['album']['artists'] = []
+                            track_artists = track['artists'].split(", ")
+                            for artist in track_artists:
+                                artist_info = {}
+                                artist_info['id'] = ""
+                                artist_info['name'] = artist
+                                track_info['artists'].append(artist_info)
+                                track_info['album']['artists'].append(artist_info)
+                            track_info['album']['images'] = [track["cover"]]
+                            track_dict = { 'track': track_info }
+                            neat_tracks.append(track_dict)
+                        return neat_tracks
+                except aiohttp.ContentTypeError:
+                    return None
+    return None
+
 async def get_mp3(url):
     try:
         gid, tid, filename = await get_track_data(url)
