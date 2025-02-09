@@ -138,11 +138,14 @@ def handle_playlist_stream(data):
                 'genres': genres,
                 'cover_art_url': cover_art_url
             }
-            merged_file = asyncio.run(add_mdata(filelike, mdata))
+            try:
+                merged_file = asyncio.run(add_mdata(filelike, mdata))
             
-            chunk_size = 1024 * 64
-            downloaded_size = 0 
-            total_size = len(merged_file.getbuffer())
+                chunk_size = 1024 * 64
+                downloaded_size = 0 
+                total_size = len(merged_file.getbuffer())
+            except:
+                continue
             
             while chunk := merged_file.read(chunk_size):
                 downloaded_size += len(chunk)
