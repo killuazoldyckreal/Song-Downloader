@@ -82,4 +82,4 @@ This program uses the following APIs and libraries:
 
 ## License
 
-This project is licensed under the [ECL V2.0](LICENSE).
+This project is licensed under the [CC BY-NC 4.0](LICENSE.md).
