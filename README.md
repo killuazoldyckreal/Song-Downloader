@@ -1,6 +1,6 @@
-# Spotify Downloader
+# Song Downloader
 
-This Python-based web application allows users to download songs from Spotify by providing a song URL or name query. It fetches songs from Spotify using third-party API services, adds metadata to the songs, and delivers them in .mp3 format.
+This Python-based web application allows users to download Spotify songs by song URL or name query.
 
 [Demo](https://spotifydownloader-killua.onrender.com)
 
@@ -18,16 +18,16 @@ This application is intended for **educational and personal use only**. Users sh
 > Implemented a web page interface for users to input Spotify song URLs or names for downloading.
 
 ### Metadata Addition 
-> Added metadata to downloaded songs before delivering the .mp3 files to users, enhancing the overall user experience.
+> Add metadata to songs before delivering the .mp3 files to users, enhancing the overall user experience.
 
 ### Security Enhancements 
-> Implemented security features such as CSRF tokens and restricted request origins for improved security.
+> Implemented security features like restricted request origins for improved security.
 
 ### Environment Variables 
 > Stored sensitive information such as API keys and tokens in a separate `.env` file for improved security and ease of configuration.
 
 ### Multiple API Setup 
-> Configured two APIs to fetch songs, providing redundancy and ensuring robustness in case one API fails.
+> Configured multiple APIs to fetch songs, providing redundancy and ensuring robustness in case any API fails.
 
 ## Requirements
 
@@ -82,4 +82,4 @@ This program uses the following APIs and libraries:
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [ECL V2.0](LICENSE).
