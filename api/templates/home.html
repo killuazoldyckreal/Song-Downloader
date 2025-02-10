@@ -461,6 +461,14 @@
         });
       });
 
+      socket.io.engine.on("close", (reason) => {
+        console.warn("WebSocket closed:", reason);
+      });
+      
+      socket.io.engine.on("error", (error) => {
+        console.error("WebSocket error:", error);
+      });
+
       socket.on("connect_error", () => {
         console.warn("Socket disconnected! Stopping current downloads.");
         if (currentTrack) {
