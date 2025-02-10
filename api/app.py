@@ -53,6 +53,35 @@ def fetch_spotify_track(track_id=None, track_name=None):
 def fetch_spotify_playlist(playlist_id):
     return sp.playlist_tracks(playlist_id)['items']
 
+client_status = {} 
+
+def cleanup_inactive_clients():
+    while True:
+        current_time = time.time()
+        to_delete = [
+            client_id for client_id, data in client_status.items()
+            if not data.get("connected", False) and (current_time - data.get("timestamp", current_time - EXPIRY_TIME)) >= EXPIRY_TIME
+        ]
+
+        for client_id in to_delete:
+            del client_status[client_id]
+
+        gevent.sleep(300)
+        
+gevent.spawn(cleanup_inactive_clients)
+
+@socketio.on('connect')
+def handle_reconnect(data):
+    client_id = request.cookies.get('client_id', None)
+    if client_id in client_status:
+        client_status[client_id]['connected'] = True
+        
+@socketio.on('disconnect')
+def handle_disconnect():
+    client_id = request.cookies.get('client_id', None)
+    if client_id in client_status:
+        client_status[client_id]['connected'] = False
+
 @socketio.on('request_audio')
 def handle_audio_stream(data):
     track_id = data.get('track_id', None)
@@ -93,6 +122,7 @@ def handle_audio_stream(data):
             downloaded_size += len(chunk)
             progress_percentage = round((downloaded_size / total_size) * 100)
             socketio.emit('audio_chunk', {
+                'track_id' : track_id,
                 'data': chunk,
                 'progress_percentage': progress_percentage
             }, room=request.sid)
@@ -101,23 +131,6 @@ def handle_audio_stream(data):
     except Exception as e:
         logging.error(traceback.format_exc())
         socketio.emit('error', {'error': str(e)}, room=request.sid)
-
-client_status = {} 
-
-def cleanup_inactive_clients():
-    while True:
-        current_time = time.time()
-        to_delete = [
-            client_id for client_id, data in client_status.items()
-            if not data.get("connected", False) and (current_time - data.get("timestamp", current_time - EXPIRY_TIME)) >= EXPIRY_TIME
-        ]
-
-        for client_id in to_delete:
-            del client_status[client_id]
-
-        gevent.sleep(300)
-        
-gevent.spawn(cleanup_inactive_clients)
 
 @socketio.on('request_playlist')
 def handle_playlist_stream(data):
@@ -203,21 +216,6 @@ def handle_playlist_stream(data):
     except Exception as e:
         logging.error(traceback.format_exc())
         socketio.emit('error', {'error': str(e)}, room=request.sid)
-        
-@socketio.on('disconnect')
-def handle_disconnect():
-    client_id = request.cookies.get('client_id', None)
-    if client_id in client_status:
-        client_status[client_id]['connected'] = False
-
-@socketio.on('client_reconnected')
-def handle_reconnect(data):
-    client_id = request.cookies.get('client_id', None)
-    if client_id in client_status:
-        client_status[client_id]['connected'] = True
-        playlist_id = client_status[client_id]['playlist_id']
-        if playlist_id:
-            handle_playlist_stream({'playlist_id': playlist_id})
     
 @app.route('/')
 def home():
