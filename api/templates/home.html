@@ -384,19 +384,26 @@
       let audioChunks = [];
       let zip = new JSZip();
       let tracks = {};
+      let currentPlaylistId = null;
+      let currentTrack = null;
+      var progressBardiv = document.getElementById("progressBar");
+      var progressBar = document.getElementById("progress");
+      var progressText = document.getElementById("progressText");
 
       function hideProgress() {
         setTimeout(function() {
-          document.getElementById("progressBar").style.display = "none";
-          document.getElementById("progressText").style.display = "none";
-          document.getElementById("progress").style.width = "0%";
-          document.getElementById("progressText").innerHTML = "0%";
+          progressBardiv.style.display = "none";
+          progressText.style.display = "none";
+          progressBar.style.width = "0%";
+          progressText.innerHTML = "0%";
           document.getElementById("urlInput").value = "";
           document.getElementById("downloadButton").value = "Download";
           isDownloading = false;
           audioChunks = [];
           zip = new JSZip();
           tracks = {};
+          currentPlaylistId = null;
+          currentTrack = null;
         }, 3000);
       }
 
@@ -418,9 +425,6 @@
             return;
           }
           var urlInputValue = document.getElementById("urlInput").value;
-          var progressBardiv = document.getElementById("progressBar");
-          var progressBar = document.getElementById("progress");
-          var progressText = document.getElementById("progressText");
           const spotifyUrl = urlInputValue.trim();
           const trackMatch = spotifyUrl.match(/\/track\/(\w+)/);
           const playlistMatch = spotifyUrl.match(/\/playlist\/(\w+)/);
@@ -431,90 +435,115 @@
           }
           document.getElementById("downloadButton").value = "Cancel download";
           progressText.style.display = "block";
-          socket.off('playlist_audio_chunk');
-          socket.off('playlist_audio_complete');
-          socket.off('playlist_download_complete');
-          socket.off('audio_chunk');
-          socket.off('audio_complete');
-          socket.off('error');
+          
+          socket.off();
+          
+          socket.on('audio_chunk', handleAudioChunk);
+          socket.on('audio_complete', handleAudioComplete);
+          socket.on('playlist_audio_chunk', handlePlaylistAudioChunk);
+          socket.on('playlist_audio_complete', handlePlaylistAudioComplete);
+          socket.on('playlist_download_complete', handlePlaylistDownloadComplete);
+          
           if (playlistMatch) {
-            const playlistId = playlistMatch[1];
+            currentPlaylistId = playlistMatch[1];
             displayMessage(progressText, "Fetching playlist...", 1000);
-            socket.emit('request_playlist', {
-              'playlist_id': playlistId
-            });
+            socket.emit('request_playlist', { 'playlist_id': currentPlaylistId });
             tracks = {};
-            socket.on('playlist_audio_chunk', (data) => {
-              if (!tracks[data.track_name]) {
-                tracks[data.track_name] = [];
-              }
-              let chunk = new Uint8Array(data.data);
-              tracks[data.track_name].push(chunk);
-              progressBardiv.style.display = "flex";
-              progressBar.style.width = `${data.progress_percentage}%`;
-              progressText.innerText = `Downloading: ${data.track_name} (${data.progress_percentage}%)`;
-            });
-            socket.on('playlist_audio_complete', (data) => {
-              const track_name = data.filename;
-              let trackBlob = new Blob(tracks[track_name], {
-                type: 'audio/mpeg'
-              });
-              zip.file(track_name, trackBlob);
-            });
-            socket.on('playlist_download_complete', () => {
-              progressText.innerText = 'Playlist downloaded! Converting to .zip file...';
-              zip.generateAsync({
-                type: 'blob'
-              }).then((content) => {
-                let a = document.createElement('a');
-                a.href = URL.createObjectURL(content);
-                a.download = 'Spotify_Playlist.zip';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                hideProgress();
-              });
-            });
           } else {
             if (trackMatch) {
               const trackId = trackMatch[1];
-              socket.emit('request_audio', {
-                'track_id': trackId
-              });
+              socket.emit('request_audio', { 'track_id': trackId });
             } else {
-              socket.emit('request_audio', {
-                'track_name': spotifyUrl
-              });
+              socket.emit('request_audio', { 'track_name': spotifyUrl });
             }
-            socket.on('audio_chunk', (data) => {
-              progressBardiv.style.display = "flex";
-              let chunk = new Uint8Array(data.data);
-              audioChunks.push(chunk);
-              progressBar.style.width = `${data.progress_percentage}%`;
-              progressText.innerText = `${data.progress_percentage}%`;
-            });
-            socket.on('audio_complete', (data) => {
-              progressBar.style.width = '100%';
-              progressText.innerText = '100%';
-              let blob = new Blob(audioChunks, {
-                type: "audio/mpeg"
-              });
-              let downloadUrl = URL.createObjectURL(blob);
-              let a = document.createElement("a");
-              a.href = downloadUrl;
-              a.download = data.filename;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              hideProgress();
-            });
           }
-          socket.on('error', (errorData) => {
-            hideProgress();
-            alert('Error: ' + errorData.error);
-          });
         });
       });
+      
+      socket.on("disconnect", () => {
+        console.warn("Socket disconnected! Stopping current downloads.");
+        if (currentTrack) {
+          delete tracks[currentTrack];
+          if (!currentPlaylistId && Object.keys(tracks).length === 0) {
+            hideProgress();
+          }
+        }
+      });
+      
+      socket.on("connect", () => {
+        console.warn("Socket connected! Resuming any pending downloads.");
+        if (currentPlaylistId) {
+          socket.emit("request_playlist", { playlist_id: currentPlaylistId });
+        } else if (currentTrack) {
+          socket.emit("request_audio", { 'track_id': currentTrack });
+        }
+      });
+      
+      socket.on("error", (errorData) => {
+        hideProgress();
+        alert('Error: ' + errorData.error);
+      });
+      
+      function handleAudioChunk(data) {
+        currentTrack = data.track_id;
+        progressBardiv.style.display = "flex";
+        let chunk = new Uint8Array(data.data);
+        audioChunks.push(chunk);
+        progressBar.style.width = `${data.progress_percentage}%`;
+        progressText.innerText = `${data.progress_percentage}%`;
+      }
+      
+      function handleAudioComplete(data) {
+        progressBar.style.width = '100%';
+        progressText.innerText = '100%';
+        let blob = new Blob(audioChunks, {
+          type: "audio/mpeg"
+        });
+        let downloadUrl = URL.createObjectURL(blob);
+        let a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = data.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        hideProgress();
+      }
+
+      function handlePlaylistAudioChunk(data) {
+        currentTrack = data.track_name;
+        if (!tracks[currentTrack]) {
+          tracks[currentTrack] = [];
+        }
+        
+        let chunk = new Uint8Array(data.data);
+        tracks[currentTrack].push(chunk);
+        progressBardiv.style.display = "flex";
+        progressBar.style.width = `${data.progress_percentage}%`;
+        progressText.innerText = `Downloading: ${data.track_name} (${data.progress_percentage}%)`;
+      }
+      
+      function handlePlaylistAudioComplete(data) {
+        const track_name = data.filename;
+        let trackBlob = new Blob(tracks[track_name], {
+          type: 'audio/mpeg'
+        });
+        zip.file(track_name, trackBlob);
+      }
+      
+      function handlePlaylistDownloadComplete() {
+        progressText.innerText = 'Playlist downloaded! Converting to .zip file...';
+        zip.generateAsync({
+          type: 'blob'
+        }).then((content) => {
+          let a = document.createElement('a');
+          a.href = URL.createObjectURL(content);
+          a.download = 'Spotify_Playlist.zip';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          hideProgress();
+        });
+      }
     </script>
   </body>
 </html>
