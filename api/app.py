@@ -139,10 +139,8 @@ def handle_playlist_stream(data):
     if not playlist_id or not client_id:
         socketio.emit('error', {'error': "Invalid request"}, room=request.sid)
         return
-        
-    client_status[client_id] = client_status.get(client_id, None)
     
-    if client_status[client_id]['playlist_id'] & client_status[client_id]['playlist_id'] == playlist_id:
+    if client_status and client_id in client_status and client_status[client_id]['playlist_id'] == playlist_id:
         progress = client_status[client_id]['progress']
         old_tracks = tracks
         
