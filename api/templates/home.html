@@ -460,6 +460,16 @@
           }
         });
       });
+
+      socket.on("connect_error", () => {
+        console.warn("Socket disconnected! Stopping current downloads.");
+        if (currentTrack) {
+          delete tracks[currentTrack];
+          if (!currentPlaylistId && Object.keys(tracks).length === 0) {
+            hideProgress();
+          }
+        }
+      });
       
       socket.on("disconnect", () => {
         console.warn("Socket disconnected! Stopping current downloads.");
