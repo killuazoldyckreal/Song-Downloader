@@ -42,11 +42,12 @@ async def add_mdata(audio_file, metadata):
     try:
         audio_file.seek(0)
         tags = ID3()
-        async with aiohttp.ClientSession() as session:
-            async with session.get(metadata["cover_art_url"]) as response:
-                if response.status != 200:
-                    raise Exception(f"Failed to download cover art. Status code: {response.status}")
-                cover_image_data = BytesIO(await response.read())
+        cover_image_data = None
+        if metadata["cover_art_url"] and isinstance(metadata["cover_art_url"], str):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(metadata["cover_art_url"]) as response:
+                    if response.status == 200:
+                        cover_image_data = BytesIO(await response.read())                    
         tags["TIT2"] = TIT2(encoding=3, text=metadata["track_name"])
         tags["TPE1"] = TPE1(encoding=3, text=metadata["artists"])
         tags["TALB"] = TALB(encoding=3, text=metadata["album_name"])
@@ -54,13 +55,8 @@ async def add_mdata(audio_file, metadata):
         tags["TCON"] = TCON(encoding=3, text=metadata["genres"])
         if "album_artists" in metadata:
             tags["TPE2"] = TPE2(encoding=3, text=metadata["album_artists"])
-        tags["APIC"] = APIC(
-            encoding=0,
-            mime="image/jpeg",
-            type=3,
-            desc="Cover",
-            data=cover_image_data.getvalue(),
-        )
+        if cover_image_data:
+            tags["APIC"] = APIC(encoding=0, mime="image/jpeg", type=3, desc="Cover", data=cover_image_data.getvalue())
         tags.save(audio_file)
         audio_file.seek(0)
         return audio_file
