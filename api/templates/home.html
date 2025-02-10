@@ -463,6 +463,10 @@
 
       socket.io.engine.on("close", (reason) => {
         console.warn("WebSocket closed:", reason);
+        setTimeout(() => {
+          console.warn("Attempting to reconnect...");
+          socket.connect();
+        }, 5000);
       });
       
       socket.io.engine.on("error", (error) => {
