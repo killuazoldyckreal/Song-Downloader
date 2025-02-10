@@ -147,6 +147,8 @@ def handle_playlist_stream(data):
         tracks = [ track for track in old_tracks if progress.get(track['track']['id'], 0) < 100 ]
     else:
         client_status[client_id] = {'connected': True, 'playlist_id': playlist_id, 'progress': {}}
+    timestamp = int(time.time())
+    client_status[client_id]["timestamp"] = timestamp
     
     try:
         try:
