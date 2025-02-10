@@ -370,7 +370,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
       var socket = io.connect('https://spotifydownloader-killua.onrender.com', {
-        transports: ["websocket"],
+        withCredentials: true,
+        transports: ["websocket", "polling"],
         reconnection: true,
         reconnectionAttempts: 10,
         reconnectionDelay: 5000,
