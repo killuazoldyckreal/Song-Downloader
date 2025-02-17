@@ -102,69 +102,69 @@ async def get_track_data(url):
                 )
     return None, None, None
 
-async def fetch_alternate_download3(gid, tid):
+async def fetch_alternate_download3(timeout, gid, tid):
     track_url = "https://open.spotify.com/track/" + tid
     body = {"url": track_url}
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(api4_url, json=body) as response:
-            if response.status == 200:
-                try:
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        try:
+            async with session.post(api4_url, json=body) as response:
+                if response.status == 200:
                     data = await response.json()
                     return data.get("file_url", None)
-                except aiohttp.ContentTypeError:
-                    return None
+        except:
+            pass
     return None
 
-async def fetch_alternate_download2(gid, tid):
+async def fetch_alternate_download2(timeout, gid, tid):
     track_url = "https://open.spotify.com/track/" + tid
     params = {
         "apikey": api3_key,
         "url": track_url
     }
     
-    async with aiohttp.ClientSession() as session:
-        async with session.get(api3_url, params=params) as response:
-            if response.status == 200:
-                try:
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        try:
+            async with session.get(api3_url, params=params) as response:
+                if response.status == 200:
                     data = await response.json()
                     error = data.get("error", True)
                     if not error:
                         medias = data.get("medias", [])
                         if medias:
                             return medias[0].get("url", None)
-                except aiohttp.ContentTypeError:
-                    return None
+        except:
+            pass
     return None
 
-async def fetch_alternate_download(gid, tid):
+async def fetch_alternate_download(timeout, gid, tid):
     body = {"data": get_token(tid)}
     headers = json.loads(api2_headers)
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(api2_url, headers=headers, json=body) as response:
-            if response.status == 200:
-                try:
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        try:
+            async with session.post(api2_url, headers=headers, json=body) as response:
+                if response.status == 200:
                     data = await response.json()
                     return data.get("link", None)
-                except aiohttp.ContentTypeError:
-                    return None
+        except:
+            pass
     return None
 
-async def get_download_url(gid, tid):
+async def get_download_url(timeout, gid, tid):
     url = f"{api1_url}/spotify/mp3-convert-task/{gid}/{tid}"
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            if response.status == 200:
-                try:
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        try:
+            async with session.get(url) as response:
+                if response.status == 200:
                     data = await response.json()
                     download_url_endpoint = data.get("result", {}).get("download_url", None)
                     if download_url_endpoint:
                         download_url = api1_url + download_url_endpoint
                         return download_url
-                except aiohttp.ContentTypeError:
-                    return None
+        except:
+            pass
     return None
     
 api_sources = itertools.cycle([
@@ -175,9 +175,10 @@ api_sources = itertools.cycle([
 ])
 
 async def fetch_download_rotated(gid, tid):
+    timeout = aiohttp.ClientTimeout(total=2)
     for _ in range(4): 
         api_func = next(api_sources)
-        download_url = await api_func(gid, tid)
+        download_url = await api_func(timeout, gid, tid)
         if download_url:
             return download_url
     return None
