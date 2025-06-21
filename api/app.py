@@ -30,7 +30,7 @@ api1_url = os.environ.get("SONG_API1_URL")
 active_files = {}
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-socketio = SocketIO(app, async_mode='gevent', ping_interval=25, ping_timeout=60, cors_allowed_origins=["https://spotifydownloader-killua.onrender.com"])
+socketio = SocketIO(app, async_mode='gevent', ping_interval=25, ping_timeout=60, cors_allowed_origins=["https://spotifydownloader-killua.onrender.com","https://sp.killua.live"])
 
 limiter = Limiter(app, storage_uri='memory://')
 limiter.key_func = get_remote_address
