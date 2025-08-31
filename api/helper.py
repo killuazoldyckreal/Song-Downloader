@@ -6,18 +6,12 @@ from io import BytesIO
 import aiohttp
 from dotenv import load_dotenv
 import json, time, base64, hashlib
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
 
 
 load_dotenv()
 api1_url = os.environ.get("SONG_API1_URL")
-api2_url = os.environ.get("SONG_API2_URL")
-api2_key = os.environ.get("SONG_API2_KEY")
-api2_headers = os.environ.get("SONG_API2_HEADERS")
 api3_url = os.environ.get("SONG_API3_URL")
 api3_key = os.environ.get("SONG_API3_KEY")
-api4_url = os.environ.get("SONG_API4_URL")
 
 
 logging.basicConfig(
@@ -63,32 +57,6 @@ async def add_mdata(audio_file, metadata):
     except Exception as e:
         logging.error(traceback.format_exc())
         return None
-        
-def derive_key_and_iv(password, salt, key_size=32, iv_size=16, iterations=1):
-    """Mimics CryptoJS key derivation using MD5."""
-    key_iv = b""
-    last = b""
-    while len(key_iv) < (key_size + iv_size):
-        last = hashlib.md5(last + password.encode() + salt).digest()
-        key_iv += last
-    return key_iv[:key_size], key_iv[key_size:key_size + iv_size]
-    
-def get_token(e):
-    data = json.dumps({
-        "token": e,
-        "expiresAt": int(time.time() * 1000) + 20000
-    })
-
-    salt = get_random_bytes(8)
-    key, iv = derive_key_and_iv(api2_key, salt)
-
-    cipher = AES.new(key, AES.MODE_CBC, iv)
-    
-    pad = lambda s: s + (16 - len(s) % 16) * chr(16 - len(s) % 16)
-    encrypted = cipher.encrypt(pad(data).encode())
-    
-    token = b"Salted__" + salt + encrypted
-    return base64.b64encode(token).decode()
     
 async def get_track_data(url):
     async with aiohttp.ClientSession() as session:
@@ -102,7 +70,7 @@ async def get_track_data(url):
                 )
     return None, None, None
 
-async def fetch_alternate_download3(timeout, gid, tid):
+async def fetch_alternate_download2(timeout, gid, tid):
     track_url = "https://open.spotify.com/track/" + tid
     body = {"url": track_url}
 
@@ -116,16 +84,16 @@ async def fetch_alternate_download3(timeout, gid, tid):
             pass
     return None
 
-async def fetch_alternate_download2(timeout, gid, tid):
+async def fetch_alternate_download(timeout, gid, tid):
     track_url = "https://open.spotify.com/track/" + tid
     params = {
-        "apikey": api3_key,
         "url": track_url
     }
+    headers = {"apikey": api3_key}
     
     async with aiohttp.ClientSession(timeout=timeout) as session:
         try:
-            async with session.get(api3_url, params=params) as response:
+            async with session.get(api3_url, params=params, headers=headers) as response:
                 if response.status == 200:
                     data = await response.json()
                     error = data.get("error", True)
@@ -133,20 +101,6 @@ async def fetch_alternate_download2(timeout, gid, tid):
                         medias = data.get("medias", [])
                         if medias:
                             return medias[0].get("url", None)
-        except:
-            pass
-    return None
-
-async def fetch_alternate_download(timeout, gid, tid):
-    body = {"data": get_token(tid)}
-    headers = json.loads(api2_headers)
-
-    async with aiohttp.ClientSession(timeout=timeout) as session:
-        try:
-            async with session.post(api2_url, headers=headers, json=body) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return data.get("link", None)
         except:
             pass
     return None
@@ -169,9 +123,8 @@ async def get_download_url(timeout, gid, tid):
     
 api_sources = itertools.cycle([
     get_download_url,  
-    fetch_alternate_download,  
-    fetch_alternate_download2,  
-    fetch_alternate_download3
+    fetch_alternate_download,
+    fetch_alternate_download2
 ])
 
 async def fetch_download_rotated(gid, tid):
