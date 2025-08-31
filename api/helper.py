@@ -1,7 +1,7 @@
 from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB, TDRC, TCON, TPE2, USLT
 from spotipy.cache_handler import CacheHandler
 import logging, itertools
-import sys, os, traceback
+import sys, os, traceback, re
 from io import BytesIO
 import aiohttp
 from dotenv import load_dotenv
@@ -57,17 +57,24 @@ async def add_mdata(audio_file, metadata):
     except Exception as e:
         logging.error(traceback.format_exc())
         return None
-    
+
+def get_track_id(url):
+    pattern = r"track/([A-Za-z0-9]+)"
+    match = re.search(pattern, url)
+    tid = match.group(1)
+    return tid
+
 async def get_track_data(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
-                return (
-                    data["result"].get("gid"),
-                    data["result"].get("id"),
-                    data["result"].get("name") + ".mp3",
-                )
+                if not "error" in data:
+                    return (
+                        data["result"].get("gid"),
+                        data["result"].get("id"),
+                        data["result"].get("name") + ".mp3",
+                    )
     return None, None, None
 
 async def fetch_alternate_download2(timeout, gid, tid):
@@ -106,6 +113,8 @@ async def fetch_alternate_download(timeout, gid, tid):
     return None
 
 async def get_download_url(timeout, gid, tid):
+    if not gid:
+        return None
     url = f"{api1_url}/spotify/mp3-convert-task/{gid}/{tid}"
 
     async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -186,11 +195,12 @@ async def fetch_playlist(playlistid):
                     return None
     return None
 
-async def get_mp3(url):
+async def get_mp3(url, filename_alt):
     try:
         gid, tid, filename = await get_track_data(url)
         if not gid or not tid:
-            return None, None
+            tid = get_track_id(url)
+            filename = f"{filename_alt}.mp3"
         
         download_url = await fetch_download_rotated(gid, tid)
         if download_url:

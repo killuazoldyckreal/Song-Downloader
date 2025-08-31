@@ -93,7 +93,7 @@ def handle_audio_stream(data):
     try:
         results = fetch_spotify_track(track_id=track_id) if track_id else fetch_spotify_track(track_name=track_name)
         url = f'{api1_url}/spotify/get?url=https://open.spotify.com/track/{results["id"]}'
-        audiobytes, filename = loop.run_until_complete(get_mp3(url))
+        audiobytes, filename = loop.run_until_complete(get_mp3(url, results['name']))
         filelike = BytesIO(audiobytes)
         
         track_name = results['name']
