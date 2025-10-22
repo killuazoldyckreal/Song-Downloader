@@ -131,13 +131,14 @@ async def get_download_url(timeout, gid, tid):
     return None
     
 api_sources = itertools.cycle([
-    get_download_url,  
-    fetch_alternate_download,
-    fetch_alternate_download2
+    #get_download_url,  
+    fetch_alternate_download#,
+    #fetch_alternate_download2
 ])
 
 async def fetch_download_rotated(gid, tid):
     timeout = aiohttp.ClientTimeout(total=2)
+    
     for _ in range(4): 
         api_func = next(api_sources)
         download_url = await api_func(timeout, gid, tid)
